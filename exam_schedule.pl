@@ -1,26 +1,7 @@
 % AEM: 3770, Φυσέκης Θωμάς
 % AEM: 3620, Στέργιος Μουμτζής
-/*
-% Define the valid_schedule predicate
-valid_schedule(A, B, C) :-
-    % Check that no lesson appears more than once in the schedule
-    setof(L, (member(L, A); member(L, B); member(L, C)), Ls),
-    length(Ls, N),
-    length(A, Na),
-    length(B, Nb),
-    length(C, Nc),
-    % Check that all three weeks have the correct number of unique lessons
-    N =:= Na + Nb + Nc.
 
-% Check that each group has the right number of lessons
-length(A,3),
-length(B,3),
-length(C,2).
-% Check that the schedule satisfies the constraints
-valid_schedule(A, B, C).
-*/
-
-%oad the attends.pl file
+% Load the attends.pl file
 :- consult('attends.pl').
 
 schedule(A, B, C) :-
@@ -56,13 +37,42 @@ schedule_([L|Ls], A, B, C) :-
 
 
 
-% Define the schedule_errors predicate
 schedule_errors(A, B, C, E) :-
-    findall(Students, attends(Students,A), StudentsList),
-    write(StudentsList).%not gonna work,the A has 3 elements not 1
-    %count_dissatisfied_students(A, B, C, E).
+    get_students(A, StudentsA),
+    print_students(StudentA).
 
-% Define the count_dissatisfied_students predicate
-count_dissatisfied_students(A, B, C, E) :-
-    findall(S, (attends(S, L), (member(L, A); member(L, B); member(L, C))), Students),
-    findall(Student, (member(Student, Students), count_occurrences(Student, Students, Occurrences))).
+
+% Helper predicate to retrieve students attending a lesson
+get_students([], []).
+get_students([Lesson|Rest], Students) :-
+    %here we find all the students for the first lesson
+    findall(Student,attends(Student, Lesson), LessonStudents),
+    get_students(Rest,RestStudents),
+    append(LessonStudents, RestStudents, Students).
+
+
+hi(A):-
+    count_elements([479,480,481,483,484,491,479,508,513,515,517],A).
+
+count_elements([], 0).  % Base case: empty list has zero occurrences
+
+count_elements([H | T], Count) :-
+    count_elements(T, TailCount),  % Recursively count occurrences in the tail T
+    count_element(H, T, ElementCount),  % Count occurrences of H in T
+    Count is TailCount + ElementCount.  % Total count is sum of tail count and element count
+
+count_element(_, [], 0).  % Base case: no more elements to count
+
+count_element(X, [X | T], Count) :-
+    count_element(X, T, TailCount),  % Recursively count remaining occurrences of X
+    Count is TailCount + 1.  % Increment the count by 1
+
+count_element(X, [H | T], Count) :-
+    X \= H,  % X is different from the current head H
+    count_element(X, T, Count).  % Recursively count remaining occurrences of X
+
+
+print_students([]).
+print_students([H|T]) :-
+    writeln(H),
+    print_students(T).
