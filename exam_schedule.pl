@@ -39,7 +39,49 @@ schedule_([L|Ls], A, B, C) :-
 
 schedule_errors(A, B, C, E) :-
     get_students(A, StudentsA),
-    print_students(StudentA).
+    get_students(B, StudentsB),
+    get_students(C, StudentsC),
+    count_elements(StudentsA, CountA),
+    count_elements(StudentsB, CountB),
+    count_elements(StudentsC, CountC),
+    E is CountA + CountB + CountC.
+
+% Helper predicate to retrieve students attending a lesson
+get_students(Lessons, Students) :-
+    maplist(find_students, Lessons, StudentsList),
+    flatten(StudentsList, Students).
+
+find_students(Lesson, Students) :-
+    findall(Student, attends(Student, Lesson), Students).
+
+count_elements(List, Count) :-
+    foldl(update_count, List, [], Counted),
+    count_extra_elements(Counted, Count).
+
+update_count(Element, Counted, NewCounted) :-
+    (   select([Element, N], Counted, Rest)
+    ->  N1 is N + 1,
+        NewCounted = [[Element, N1] | Rest]
+    ;   NewCounted = [[Element, 1] | Counted]
+    ).
+
+count_extra_elements(Counted, ExtraCount) :-
+    include(exceeds_threshold, Counted, Exceeding),
+    length(Exceeding, ExtraCount).
+
+exceeds_threshold([_, N]) :-
+    N > 2.
+
+
+/*
+schedule_errors(A, B, C, E) :-
+    get_students(A, StudentsA),
+    get_students(B, StudentsB),
+    get_students(C, StudentsC),
+    count_elements(StudentsA,CountA),
+    count_elements(StudentsB,CountB),
+    count_elements(StudentsC,CountC),
+    E is CountA + CountB + CountC.
 
 
 % Helper predicate to retrieve students attending a lesson
@@ -50,29 +92,29 @@ get_students([Lesson|Rest], Students) :-
     get_students(Rest,RestStudents),
     append(LessonStudents, RestStudents, Students).
 
+count_elements(List, Count) :-
+    count_elements(List, [], Count).
 
-hi(A):-
-    count_elements([479,480,481,483,484,491,479,508,513,515,517],A).
+% Predicate to count elements in the list
+count_elements([], Counted, Count) :-
+    count_extra_elements(Counted, Count).  % Count the extra elements in Counted
+count_elements([H|T], Counted, Count) :-
+    (   member([H, N], Counted)  % Check if H is already counted
+    ->  N1 is N + 1,
+        select([H, N], Counted, [H, N1], NewCounted)  % Increment the count of H
+    ;   NewCounted = [[H, 1]|Counted]  % Add H to the Counted list with count 1
+    ),
+    count_elements(T, NewCounted, Count).  % Recursively process the tail of the list
 
-count_elements([], 0).  % Base case: empty list has zero occurrences
+% Predicate to count the extra elements that appear more than two times
+count_extra_elements(Counted, ExtraCount) :-
+    count_extra_elements(Counted, 0, ExtraCount).
 
-count_elements([H | T], Count) :-
-    count_elements(T, TailCount),  % Recursively count occurrences in the tail T
-    count_element(H, T, ElementCount),  % Count occurrences of H in T
-    Count is TailCount + ElementCount.  % Total count is sum of tail count and element count
-
-count_element(_, [], 0).  % Base case: no more elements to count
-
-count_element(X, [X | T], Count) :-
-    count_element(X, T, TailCount),  % Recursively count remaining occurrences of X
-    Count is TailCount + 1.  % Increment the count by 1
-
-count_element(X, [H | T], Count) :-
-    X \= H,  % X is different from the current head H
-    count_element(X, T, Count).  % Recursively count remaining occurrences of X
-
-
-print_students([]).
-print_students([H|T]) :-
-    writeln(H),
-    print_students(T).
+count_extra_elements([], ExtraCount, ExtraCount).  % Base case: no more elements to process
+count_extra_elements([[_, N]|T], Acc, ExtraCount) :-
+    (   N > 2  % Check if the count is more than two
+    ->  Acc1 is Acc + 1  % Increment the count of extra elements
+    ;   Acc1 is Acc
+    ),
+    count_extra_elements(T, Acc1, ExtraCount).  % Recursively process the remaining elements
+*/
