@@ -1,78 +1,5 @@
 % AEM: 3770, Φυσέκης Θωμάς
 % AEM: 3620, Στέργιος Μουμτζής
-
-% Load the attends.pl file
-:- consult('attends.pl').
-
-schedule(A, B, C) :-
-    % Get the list of all lessons from attends.pl without duplicates
-    findall(Lesson, attends(_, Lesson), Lessons),
-    list_to_set(Lessons, UniqueLessons),
-    % Try all possible schedules using the unique lessons
-    schedule_(UniqueLessons, A, B, C).
-
-% Define the schedule_ predicate for backtracking
-schedule_([], [], [], []).
-schedule_([L|Ls], A, B, C) :-
-    % Try adding the lesson to the first week
-    schedule_(Ls, A1, B, C),
-    length(A1, Na),
-    Na < 3,
-    \+ member(L, A1),
-    A = [L|A1].
-schedule_([L|Ls], A, B, C) :-
-    % Try adding the lesson to the second week
-    schedule_(Ls, A, B1, C),
-    length(B1, Nb),
-    Nb < 3,
-    \+ member(L, B1),
-    B = [L|B1].
-schedule_([L|Ls], A, B, C) :-
-    % Try adding the lesson to the third week
-    schedule_(Ls, A, B, C1),
-    length(C1, Nc),
-    Nc < 2,
-    \+ member(L, C1),
-    C = [L|C1].
-
-
-
-schedule_errors(A, B, C, E) :-
-    get_students(A, StudentsA),
-    get_students(B, StudentsB),
-    get_students(C, StudentsC),
-    count_elements(StudentsA, CountA),
-    count_elements(StudentsB, CountB),
-    count_elements(StudentsC, CountC),
-    E is CountA + CountB + CountC.
-
-% Helper predicate to retrieve students attending a lesson
-get_students(Lessons, Students) :-
-    maplist(find_students, Lessons, StudentsList),
-    flatten(StudentsList, Students).
-
-find_students(Lesson, Students) :-
-    findall(Student, attends(Student, Lesson), Students).
-
-count_elements(List, Count) :-
-    foldl(update_count, List, [], Counted),
-    count_extra_elements(Counted, Count).
-
-update_count(Element, Counted, NewCounted) :-
-    (   select([Element, N], Counted, Rest)
-    ->  N1 is N + 1,
-        NewCounted = [[Element, N1] | Rest]
-    ;   NewCounted = [[Element, 1] | Counted]
-    ).
-
-count_extra_elements(Counted, ExtraCount) :-
-    include(exceeds_threshold, Counted, Exceeding),
-    length(Exceeding, ExtraCount).
-
-exceeds_threshold([_, N]) :-
-    N > 2.
-
-
 /*
 schedule_errors(A, B, C, E) :-
     get_students(A, StudentsA),
@@ -118,3 +45,136 @@ count_extra_elements([[_, N]|T], Acc, ExtraCount) :-
     ),
     count_extra_elements(T, Acc1, ExtraCount).  % Recursively process the remaining elements
 */
+% Load the attends.pl file
+:- consult('attends.pl').
+
+schedule(A, B, C) :-
+    % Get the list of all lessons from attends.pl without duplicates
+    findall(Lesson, attends(_, Lesson), Lessons),
+    list_to_set(Lessons, UniqueLessons),
+    % Try all possible schedules using the unique lessons
+    schedule_(UniqueLessons, A, B, C).
+
+% Define the schedule_ predicate for backtracking
+schedule_([], [], [], []).
+schedule_([L|Ls], A, B, C) :-
+    % Try adding the lesson to the first week
+    schedule_(Ls, A1, B, C),
+    length(A1, Na),
+    Na < 3,
+    \+ member(L, A1),
+    A = [L|A1].
+schedule_([L|Ls], A, B, C) :-
+    % Try adding the lesson to the second week
+    schedule_(Ls, A, B1, C),
+    length(B1, Nb),
+    Nb < 3,
+    \+ member(L, B1),
+    B = [L|B1].
+schedule_([L|Ls], A, B, C) :-
+    % Try adding the lesson to the third week
+    schedule_(Ls, A, B, C1),
+    length(C1, Nc),
+    Nc < 2,
+    \+ member(L, C1),
+    C = [L|C1].
+
+
+schedule_errors(A, B, C, E) :-
+    get_students(A, StudentsA),
+    get_students(B, StudentsB),
+    get_students(C, StudentsC),
+    count_elements(StudentsA, CountA),
+    count_elements(StudentsB, CountB),
+    count_elements(StudentsC, CountC),
+    E is CountA + CountB + CountC.
+
+% Helper predicate to retrieve students attending a lesson
+get_students(Lessons, Students) :-
+    maplist(find_students, Lessons, StudentsList),
+    flatten(StudentsList, Students).
+
+find_students(Lesson, Students) :-
+    findall(Student, attends(Student, Lesson), Students).
+
+count_elements(List, Count) :-
+    foldl(update_count, List, [], Counted),
+    count_extra_elements(Counted, Count).
+
+update_count(Element, Counted, NewCounted) :-
+    (   select([Element, N], Counted, Rest)
+    ->  N1 is N + 1,
+        NewCounted = [[Element, N1] | Rest]
+    ;   NewCounted = [[Element, 1] | Counted]
+    ).
+
+count_extra_elements(Counted, ExtraCount) :-
+    include(exceeds_threshold, Counted, Exceeding),
+    length(Exceeding, ExtraCount).
+
+exceeds_threshold([_, N]) :-
+    N > 2.
+
+
+% an o F dini thn idia evdomada 2 fores pairnei + 1
+% and dini kai thn 2h vdomada 2 forew + 3
+% an den dini tpt mia evdomada +0
+% an dini mono 1 mathima kapoia vdomada +7
+% an dini 3 mathimata kapoia vdomada -7
+
+
+score_schedule(A, B, C, S) :-
+    get_students(A,StudentsA),
+    %score_by_students(StudentsA, Score),
+    count_elements(StudentA,S).
+    %score_week(A, Score1),
+    %score_week(B, Score2),
+    %score_week(C, Score3),
+    %S is Score1 + Score2 + Score3.
+
+score_week([], 0).
+score_week([Lesson | Lessons], Score) :-
+    score_student(Lesson, StudentScore),
+    score_week(Lessons, RemainingScore),
+    Score is StudentScore + RemainingScore.
+
+score_student(Lesson, Score) :-
+    findall(Student, attends(Student, Lesson), Students),
+    count_students(Students, StudentCount),
+    score_by_students(StudentCount, Score).
+
+count_students(Students, Count) :-
+    length(Students, Count).
+
+score_by_students(2, 1).
+score_by_students(1, 7).
+score_by_students(3, -7).
+score_by_students(_, 0).
+
+
+
+
+/*
+score_schedule(A, B, C, S) :-
+    score_week(A, Score1),
+    score_week(B, Score2),
+    score_week(C, Score3),
+    S is Score1 + Score2 + Score3.
+
+score_week([], 0).
+score_week([Lesson | Lessons], Score) :-
+    score_student(Lesson, StudentScore),
+    score_week(Lessons, RemainingScore),
+    Score is StudentScore + RemainingScore.
+
+score_student(Lesson, Score) :-
+    findall(Student, attends(Student, Lesson), Students),
+    count_students(Students, StudentCount),
+    score_by_students(StudentCount, Score).
+
+count_students(Students, Count) :-
+    length(Students, Count).
+
+score_by_students(3, -7).
+score_by_students(1, 7).
+score_by_students(_, 0).
