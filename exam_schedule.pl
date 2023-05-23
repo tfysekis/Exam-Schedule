@@ -81,6 +81,7 @@ schedule_([L|Ls], A, B, C) :-
 
 
 schedule_errors(A, B, C, E) :-
+    schedule(A,B,C),
     get_students(A, StudentsA),
     get_students(B, StudentsB),
     get_students(C, StudentsC),
@@ -88,6 +89,13 @@ schedule_errors(A, B, C, E) :-
     count_elements(StudentsB, CountB),
     count_elements(StudentsC, CountC),
     E is CountA + CountB + CountC.
+
+
+minimal_schedule_errors(A,B,C,E) :-
+    findall(E, schedule_errors(A,B,C,E), DissatisfiedStudents),
+    min_list(DissatisfiedStudents, MinError),
+    schedule_errors(A,B,C,MinError),
+    E is MinError.
 
 % Helper predicate to retrieve students attending a lesson
 get_students(Lessons, Students) :-
