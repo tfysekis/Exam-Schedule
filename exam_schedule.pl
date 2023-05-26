@@ -57,15 +57,6 @@ minimal_schedule_errors(A,B,C,E) :-
     %min_list(DissatisfiedStudents, MinError),
     %%schedule_errors(A,B,C,MinError),
     %E is MinError.
-    schedule(A,B,C),
-    schedule_errors(A,B,C,E),
-    E = 0.
-    %findall(E, schedule_errors(A,B,C,E), DissatisfiedStudents),
-    %all_zeros(DissatisfiedStudents),
-    %format('A: ~w, B: ~w, C: ~w, DissatisfiedStudents: ~w~n', [A, B, C, DissatisfiedStudents]).
-    %min_list(DissatisfiedStudents, MinError),
-    %%schedule_errors(A,B,C,MinError),
-    %E is MinError.
 
 % Helper predicate to retrieve students attending a lesson
 get_students(Lessons, Students) :-
