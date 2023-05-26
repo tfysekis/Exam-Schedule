@@ -35,8 +35,8 @@ schedule_([L|Ls], A, B, C) :-
     \+ member(L, C1),
     C = [L|C1].
 
+
 schedule_errors(A, B, C, E) :-
-    schedule(A,B,C),
     get_students(A, StudentsA),
     get_students(B, StudentsB),
     get_students(C, StudentsC),
@@ -47,10 +47,15 @@ schedule_errors(A, B, C, E) :-
 
 
 minimal_schedule_errors(A,B,C,E) :-
-    findall(E, schedule_errors(A,B,C,E), DissatisfiedStudents),
-    min_list(DissatisfiedStudents, MinError),
-    schedule_errors(A,B,C,MinError),
-    E is MinError.
+    schedule(A,B,C),
+    schedule_errors(A,B,C,E),
+    E = 0.
+    %findall(E, schedule_errors(A,B,C,E), DissatisfiedStudents),
+    %all_zeros(DissatisfiedStudents),
+    %format('A: ~w, B: ~w, C: ~w, DissatisfiedStudents: ~w~n', [A, B, C, DissatisfiedStudents]).
+    %min_list(DissatisfiedStudents, MinError),
+    %%schedule_errors(A,B,C,MinError),
+    %E is MinError.
 
 % Helper predicate to retrieve students attending a lesson
 get_students(Lessons, Students) :-
@@ -79,48 +84,92 @@ exceeds_threshold([_, N]) :-
     N > 2.
 
 
-/*
-schedule_errors(A, B, C, E) :-
-    get_students(A, StudentsA),
-    get_students(B, StudentsB),
-    get_students(C, StudentsC),
-    count_elements(StudentsA,CountA),
-    count_elements(StudentsB,CountB),
-    count_elements(StudentsC,CountC),
-    E is CountA + CountB + CountC.
+score_schedule(A,B,C,S) :-
+%Score calculation from the students that attend only one lesson per week
+    score_by_students_with_one_lesson_per_week(A,ScoreS1),
+    score_by_students_with_one_lesson_per_week(B,ScoreS2),
+    score_by_students_with_one_lesson_per_week(C,ScoreS3),
+    Score1 is ScoreS1 + ScoreS2 + ScoreS3,
+
+    score_week1(A,Score_W1),
+    score_week1(B,Score_W2),
+    score_week1(C,Score_W3),
+    Score2 is Score_W1 + Score_W2 + Score_W3,
+
+    score_week2(A, Score2_W1),
+    score_week2(B, Score2_W2),
+    Score3 is Score_W1 + Score_W2,
+
+    S is Score1 + Score2 + Score3.
+
+%case 1: If a student is examined in the same week Monday-Wednesday, then the program takes
+%score +1 for this student and for this week
+score_week1(Lessons, Score) :-
+    first(Lessons, First),
+    second(Lessons, Second),
+    findall(Student, attends(Student, First), StudentsFirst),
+    findall(Student, attends(Student, Second), StudentsSecond),
+    intersection(StudentsFirst, StudentsSecond, Common),
+    length(Common, Count),
+    Score is Count.
+%case 2: if the second week falls on Monday-
+%Friday then the program scores +3 for that student and for that week.
+score_week2(Lessons, Score) :-
+    last(Lessons, Last),
+    first(Lessons, First),
+    findall(Student, attends(Student, First), StudentsFirst),
+    findall(Student, attends(Student, Last), StudentsLast),
+    intersection(StudentsFirst, StudentsLast, Common),
+    length(Common,Count),
+    Score is Count * 3.
+
+%predicates to take the first and the second item from a list
+first([First | _], First).
+second([_, Second | _], Second).
+
+score_by_students_with_one_lesson_per_week(Lessons, Score) :-
+    get_students(Lessons, Students),
+    count_single_occurences(Students, Count),
+    Score is Count * 7.
+
+%predicate that counts the students where they are tested in a lesson only once in the week
+count_single_occurences(Students, Count) :-
+    findall(Student, (select(Student, Students, Rest), \+ memberchk(Student, Rest)), SingleOccurrences),
+    length(SingleOccurrences, Count).
 
 
-% Helper predicate to retrieve students attending a lesson
-get_students([], []).
-get_students([Lesson|Rest], Students) :-
-    %here we find all the students for the first lesson
-    findall(Student,attends(Student, Lesson), LessonStudents),
-    get_students(Rest,RestStudents),
-    append(LessonStudents, RestStudents, Students).
+/*score_week([], 0).
+score_week([Lesson | Lessons, Score]) :-
+    findall(Student, attends(Student, Lesson), Students),
+    score_by_students()
 
-count_elements(List, Count) :-
-    count_elements(List, [], Count).
 
-% Predicate to count elements in the list
-count_elements([], Counted, Count) :-
-    count_extra_elements(Counted, Count).  % Count the extra elements in Counted
-count_elements([H|T], Counted, Count) :-
-    (   member([H, N], Counted)  % Check if H is already counted
-    ->  N1 is N + 1,
-        select([H, N], Counted, [H, N1], NewCounted)  % Increment the count of H
-    ;   NewCounted = [[H, 1]|Counted]  % Add H to the Counted list with count 1
-    ),
-    count_elements(T, NewCounted, Count).  % Recursively process the tail of the list
 
-% Predicate to count the extra elements that appear more than two times
-count_extra_elements(Counted, ExtraCount) :-
-    count_extra_elements(Counted, 0, ExtraCount).
+score_week([], 0).
+score_week([Lesson | Lessons], Score) :-
+    score_student(Lesson, StudentScore),
+    score_week(Lessons, RemainingScore),
+    Score is StudentScore + RemainingScore.
 
-count_extra_elements([], ExtraCount, ExtraCount).  % Base case: no more elements to process
-count_extra_elements([[_, N]|T], Acc, ExtraCount) :-
-    (   N > 2  % Check if the count is more than two
-    ->  Acc1 is Acc + 1  % Increment the count of extra elements
-    ;   Acc1 is Acc
-    ),
-    count_extra_elements(T, Acc1, ExtraCount).  % Recursively process the remaining elements
+
+score_student(Lesson, Score) :-
+    findall(Student, attends(Student, Lesson), Students),
+    count_students(Students, StudentCount),
+    score_by_students(StudentCount, Score).
+
+count_students(Students, Count) :-
+    length(Students, Count).
+
+score_by_students(2, 1).
+score_by_students(1, 7).
+score_by_students(3, -7).
+score_by_students(_, 0).
+score_schedule(A, B, C, S) :-
+    get_students(A,StudentsA),
+    %score_by_students(StudentsA, Score),
+    count_elements(StudentA,S).
+    %score_week(A, Score1),
+    %score_week(B, Score2),
+    %score_week(C, Score3),
+    %S is Score1 + Score2 + Score3.
 */

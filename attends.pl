@@ -2,7 +2,8 @@
 
 attends(476, im218).
 attends(478, im218).
-attends(479, im218).
+attends(479, im217).
+attends(478, im210).
 attends(481, im218).
 attends(482, im218).
 attends(483, im218).
@@ -168,4 +169,3 @@ attends(506, im212).
 attends(520, im212).
 attends(509, im212).
 attends(510, im212).
-
