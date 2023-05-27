@@ -92,17 +92,41 @@ score_schedule(A,B,C,S) :-
     score_by_students_with_one_lesson_per_week(C,ScoreS3),
     Score1 is ScoreS1 + ScoreS2 + ScoreS3,
 
+%Score calculation from the students that give a lesson on Mon-Wed
     score_week1(A,Score_W1),
     score_week1(B,Score_W2),
     score_week1(C,Score_W3),
     Score2 is Score_W1 + Score_W2 + Score_W3,
 
+%Score calculation from the students that give a lesson on Mon-Fri
     score_week2(A, Score2_W1),
     score_week2(B, Score2_W2),
     Score3 is Score_W1 + Score_W2,
 
-    S is Score1 + Score2 + Score3.
+%Score removal calculation from the students that give 3 lessons per week
+    score_removal(A,Score_removal1),
+    score_removal(B,Score_removal2),
+    ScoreR is Score_removal1 + Score_removal2,
 
+    S is Score1 + Score2 + Score3 - ScoreR.
+
+%If a student gives three lessons in a certain week then this
+%week gets a score of -7 for this student
+score_removal(Lessons, Score) :-
+    first(Lessons, First),
+    second(Lessons, Second),
+    last(Lessons, Last),
+
+    findall(Student, attends(Student, First), StudentsFirst),
+    findall(Student, attends(Student, Second), StudentsSecond),
+    findall(Student, attends(Student, Last), StudentsLast),
+
+    intersection(StudentsFirst,StudentsSecond, Common),
+    intersection(Common, StudentsLast, CommonFinal),
+
+    length(CommonFinal, Count),
+    Score is Count * 7.
+    
 %case 1: If a student is examined in the same week Monday-Wednesday, then the program takes
 %score +1 for this student and for this week
 score_week1(Lessons, Score) :-
@@ -113,6 +137,7 @@ score_week1(Lessons, Score) :-
     intersection(StudentsFirst, StudentsSecond, Common),
     length(Common, Count),
     Score is Count.
+
 %case 2: if the second week falls on Monday-
 %Friday then the program scores +3 for that student and for that week.
 score_week2(Lessons, Score) :-
@@ -128,6 +153,8 @@ score_week2(Lessons, Score) :-
 first([First | _], First).
 second([_, Second | _], Second).
 
+%case 3: If a student is examined in only one lesson in a given week then that week gets a score of +7 for
+%this student.
 score_by_students_with_one_lesson_per_week(Lessons, Score) :-
     get_students(Lessons, Students),
     count_single_occurences(Students, Count),
