@@ -46,18 +46,54 @@ schedule_errors(A, B, C, E) :-
     count_elements(StudentsC, CountC),
     E is CountA + CountB + CountC.
 
+/*minimal_schedule_errors(A, B, C, E) :-
+    min_schedule_errors(A, B, C, E, true).
 
+min_schedule_errors(A, B, C, E, true) :-
+    Min = -1,
+    E = Min,
+    schedule(A, B, C),
+    (
+        call(schedule_errors(A, B, C, E))
+        ->  E is Min
+        ;   increment(E, ENew),
+            min_schedule_errors(A, B, C, ENew, false)
+    ).
+
+min_schedule_errors(A, B, C, ENew, false) :-
+    E = ENew,
+    (
+        call(schedule_errors(A, B, C, E))
+        ->  E is ENew
+        ;   increment(E, ENew),
+            min_schedule_errors(A, B, C, ENew, false)
+    ).
+*/
+
+minimal_schedule_errors([], [], [], 20).
 minimal_schedule_errors(A,B,C,E) :-
+    Min = -1,
     schedule(A,B,C),
+    (   call(schedule_errors(A,B,C,Min))
+    ->  E is Min
+    ;   increment(Min,MinNew),
+        E is MinNew,
+        Min is MinNew,
+        minimal_schedule_errors(A,B,C,Min)
+    ).
+    
+increment(X, X1) :- 
+    X1 is X + 1.
+    /*schedule(A,B,C),
+    findall(E, schedule_errors(A,B,C,E), DissatisfiedStudents),
+    min_list(DissatisfiedStudents, MinError),
+    schedule_errors(A,B,C,MinError),
+    E is MinError.
     schedule_errors(A,B,C,E),
     E = 0.
-    %findall(E, schedule_errors(A,B,C,E), DissatisfiedStudents),
-    %all_zeros(DissatisfiedStudents),
-    %format('A: ~w, B: ~w, C: ~w, DissatisfiedStudents: ~w~n', [A, B, C, DissatisfiedStudents]).
-    %min_list(DissatisfiedStudents, MinError),
-    %%schedule_errors(A,B,C,MinError),
-    %E is MinError.
-
+    all_zeros(DissatisfiedStudents),
+    format('A: ~w, B: ~w, C: ~w, DissatisfiedStudents: ~w~n', [A, B, C, DissatisfiedStudents]).*/
+    
 % Helper predicate to retrieve students attending a lesson
 get_students(Lessons, Students) :-
     maplist(find_students, Lessons, StudentsList),
