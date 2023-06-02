@@ -39,7 +39,7 @@ attends(494, im217).
 attends(495, im217).
 attends(497, im217).
 attends(499, im217).
-/*attends(502, im217).
+attends(502, im217).
 attends(503, im217).
 attends(504, im217).
 attends(520, im217).
@@ -169,4 +169,3 @@ attends(506, im212).
 attends(520, im212).
 attends(509, im212).
 attends(510, im212).
-*/

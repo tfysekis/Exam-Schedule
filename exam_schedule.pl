@@ -3,6 +3,7 @@
 
 % Load the attends.pl file
 :- consult('attends.pl').
+:- use_module(library(clpfd)).
 
 schedule(A, B, C) :-
     % Get the list of all lessons from attends.pl without duplicates
@@ -46,54 +47,23 @@ schedule_errors(A, B, C, E) :-
     count_elements(StudentsC, CountC),
     E is CountA + CountB + CountC.
 
-/*minimal_schedule_errors(A, B, C, E) :-
-    min_schedule_errors(A, B, C, E, true).
-
-min_schedule_errors(A, B, C, E, true) :-
-    Min = -1,
-    E = Min,
-    schedule(A, B, C),
-    (
-        call(schedule_errors(A, B, C, E))
-        ->  E is Min
-        ;   increment(E, ENew),
-            min_schedule_errors(A, B, C, ENew, false)
-    ).
-
-min_schedule_errors(A, B, C, ENew, false) :-
-    E = ENew,
-    (
-        call(schedule_errors(A, B, C, E))
-        ->  E is ENew
-        ;   increment(E, ENew),
-            min_schedule_errors(A, B, C, ENew, false)
-    ).
-*/
-
-minimal_schedule_errors([], [], [], 20).
 minimal_schedule_errors(A,B,C,E) :-
-    Min = -1,
-    schedule(A,B,C),
-    (   call(schedule_errors(A,B,C,Min))
-    ->  E is Min
-    ;   increment(Min,MinNew),
-        E is MinNew,
-        Min is MinNew,
-        minimal_schedule_errors(A,B,C,Min)
+%initially check if there number of students is equal to 0
+    min_error(A,B,C,0).
+
+min_error(A,B,C,E) :-
+    ( 
+%Create schedules with the minimum dissatisfied students        
+        schedule(A,B,C),
+        schedule_errors(A,B,C,E),
+        format('E = ~w', [E])
+    ;
+%If there is not a program with 0 dissatsified students then increase the 
+%the number by 1 until it finds a program with the next less dissatisfied students      
+        \+ (schedule(A,B,C),schedule_errors(A,B,C,E)),
+        ENew #= E + 1,
+        min_error(A,B,C,ENew)
     ).
-    
-increment(X, X1) :- 
-    X1 is X + 1.
-    /*schedule(A,B,C),
-    findall(E, schedule_errors(A,B,C,E), DissatisfiedStudents),
-    min_list(DissatisfiedStudents, MinError),
-    schedule_errors(A,B,C,MinError),
-    E is MinError.
-    schedule_errors(A,B,C,E),
-    E = 0.
-    all_zeros(DissatisfiedStudents),
-    format('A: ~w, B: ~w, C: ~w, DissatisfiedStudents: ~w~n', [A, B, C, DissatisfiedStudents]).*/
-    
 % Helper predicate to retrieve students attending a lesson
 get_students(Lessons, Students) :-
     maplist(find_students, Lessons, StudentsList),
