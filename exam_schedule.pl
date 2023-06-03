@@ -48,7 +48,7 @@ schedule_errors(A, B, C, E) :-
     E is CountA + CountB + CountC.
 
 minimal_schedule_errors(A,B,C,E) :-
-    min_error(A,B,C,-1).
+    min_error(A,B,C,0).
 
 min_error(A,B,C,E) :-
     ( 
