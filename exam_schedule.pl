@@ -48,8 +48,7 @@ schedule_errors(A, B, C, E) :-
     E is CountA + CountB + CountC.
 
 minimal_schedule_errors(A,B,C,E) :-
-%initially check if there number of students is equal to 0
-    min_error(A,B,C,0).
+    min_error(A,B,C,-1).
 
 min_error(A,B,C,E) :-
     ( 
@@ -171,6 +170,19 @@ count_single_occurences(Students, Count) :-
     findall(Student, (select(Student, Students, Rest), \+ memberchk(Student, Rest)), SingleOccurrences),
     length(SingleOccurrences, Count).
 
+
+maximum_score_schedule(A,B,C,E,S) :-
+    (
+        minimal_schedule_errors(X,Y,Z,R),
+        score_schedule(X,Y,Z,R),
+        assert(score(R))
+    ;
+        findall(S, score(S), Scores),
+        max_list(Scores, Max),
+        S #= Max,
+        minimal_schedule_errors(A,B,C,E),
+        score_schedule(A,B,C,S)
+    ).
 
 /*score_week([], 0).
 score_week([Lesson | Lessons, Score]) :-
