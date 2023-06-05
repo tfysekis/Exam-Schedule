@@ -48,14 +48,14 @@ schedule_errors(A, B, C, E) :-
     E is CountA + CountB + CountC.
 
 minimal_schedule_errors(A,B,C,E) :-
-    min_error(A,B,C,0).
+    min_error(A,B,C,E).
 
 min_error(A,B,C,E) :-
+    (var(ENew) -> E = 0 ; E = ENew),
     ( 
-%Create schedules with the minimum dissatisfied students        
+%Create schedules with the minimum dissatisfied students
         schedule(A,B,C),
-        schedule_errors(A,B,C,E),
-        format('E = ~w', [E])
+        schedule_errors(A,B,C,E)
     ;
 %If there is not a program with 0 dissatsified students then increase the 
 %the number by 1 until it finds a program with the next less dissatisfied students      
@@ -165,7 +165,7 @@ score_by_students_with_one_lesson_per_week(Lessons, Score) :-
     count_single_occurences(Students, Count),
     Score is Count * 7.
 
-%predicate that counts the students where they are tested in a lesson only once in the week
+%predicate that counts the students where they are tested in a lesson only once per week
 count_single_occurences(Students, Count) :-
     findall(Student, (select(Student, Students, Rest), \+ memberchk(Student, Rest)), SingleOccurrences),
     length(SingleOccurrences, Count).
@@ -174,8 +174,8 @@ count_single_occurences(Students, Count) :-
 maximum_score_schedule(A,B,C,E,S) :-
     (
         minimal_schedule_errors(X,Y,Z,R),
-        score_schedule(X,Y,Z,R),
-        assert(score(R))
+        score_schedule(X,Y,Z,Score),
+        assert(score(Score))
     ;
         findall(S, score(S), Scores),
         max_list(Scores, Max),
@@ -184,37 +184,3 @@ maximum_score_schedule(A,B,C,E,S) :-
         score_schedule(A,B,C,S)
     ).
 
-/*score_week([], 0).
-score_week([Lesson | Lessons, Score]) :-
-    findall(Student, attends(Student, Lesson), Students),
-    score_by_students()
-
-
-
-score_week([], 0).
-score_week([Lesson | Lessons], Score) :-
-    score_student(Lesson, StudentScore),
-    score_week(Lessons, RemainingScore),
-    Score is StudentScore + RemainingScore.
-
-score_student(Lesson, Score) :-
-    findall(Student, attends(Student, Lesson), Students),
-    count_students(Students, StudentCount),
-    score_by_students(StudentCount, Score).
-
-count_students(Students, Count) :-
-    length(Students, Count).
-
-score_by_students(2, 1).
-score_by_students(1, 7).
-score_by_students(3, -7).
-score_by_students(_, 0).
-score_schedule(A, B, C, S) :-
-    get_students(A,StudentsA),
-    %score_by_students(StudentsA, Score),
-    count_elements(StudentA,S).
-    %score_week(A, Score1),
-    %score_week(B, Score2),
-    %score_week(C, Score3),
-    %S is Score1 + Score2 + Score3.
-*/
