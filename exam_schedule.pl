@@ -81,20 +81,18 @@ count_extra_elements(Counted, ExtraCount) :-
 exceeds_threshold([_, N]) :-
     N > 2. % Predicate to check if the count exceeds the threshold (2 in this case)
 
-
-minimal_schedule_errors(A, B, C, E) :-
-    E = 0,
-    (
-        % Create schedules with the minimum dissatisfied students
-        schedule(A, B, C),
-        schedule_errors(A, B, C, E)
+minimal_schedule_errors(A,B,C,E) :-
+    (var(ENew) -> E = 0 ; E = ENew),
+    ( 
+%Create schedules with the minimum dissatisfied students
+        schedule(A,B,C),
+        schedule_errors(A,B,C,E)
     ;
-        % If there is not a program with 0 dissatisfied students,
-        % then increase the number by 1 until it finds a program
-        % with the next less dissatisfied students
-        \+ (schedule(A, B, C), schedule_errors(A, B, C, E)),
+%If there is not a program with 0 dissatsified students then increase the 
+%the number by 1 until it finds a program with the next less dissatisfied students      
+        \+ (schedule(A,B,C),schedule_errors(A,B,C,E)),
         ENew #= E + 1,
-        minimal_schedule_errors(A, B, C, ENew)
+        minimal_schedule_errors(A,B,C,ENew)
     ).
     
 
