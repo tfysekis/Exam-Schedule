@@ -37,54 +37,66 @@ schedule_([L|Ls], A, B, C) :-
     C = [L|C1].
 
 
-
+% Calculate the number of schedule errors for given courses
 schedule_errors(A, B, C, E) :-
-    get_students(A, StudentsA),
-    get_students(B, StudentsB),
-    get_students(C, StudentsC),
-    count_elements(StudentsA, CountA),
-    count_elements(StudentsB, CountB),
-    count_elements(StudentsC, CountC),
-    E is CountA + CountB + CountC.
+    % Get the students attending lesson
+    get_students(A, StudentsA), 
+    get_students(B, StudentsB), 
+    get_students(C, StudentsC), 
+    % Count the number of students 
+    count_elements(StudentsA, CountA), 
+    count_elements(StudentsB, CountB), 
+    count_elements(StudentsC, CountC), 
+    E is CountA + CountB + CountC. 
 
-minimal_schedule_errors(A,B,C,E) :-
-    (var(ENew) -> E = 0 ; E = ENew),
-    ( 
-%Create schedules with the minimum dissatisfied students
-        schedule(A,B,C),
-        schedule_errors(A,B,C,E)
-    ;
-%If there is not a program with 0 dissatsified students then increase the 
-%the number by 1 until it finds a program with the next less dissatisfied students      
-        \+ (schedule(A,B,C),schedule_errors(A,B,C,E)),
-        ENew #= E + 1,
-        minimal_schedule_errors(A,B,C,ENew)
-    ).
 % Helper predicate to retrieve students attending a lesson
 get_students(Lessons, Students) :-
-    maplist(find_students, Lessons, StudentsList),
-    flatten(StudentsList, Students).
+    % Find students for each lesson in Lessons
+    maplist(find_students, Lessons, StudentsList), 
+    flatten(StudentsList, Students). 
 
 find_students(Lesson, Students) :-
+     % Find all students attending the given lesson
     findall(Student, attends(Student, Lesson), Students).
 
 count_elements(List, Count) :-
+    % Count the occurrences of each element in the list
     foldl(update_count, List, [], Counted),
-    count_extra_elements(Counted, Count).
+    % Count the elements that exceed a certain threshold
+    count_extra_elements(Counted, Count). 
 
 update_count(Element, Counted, NewCounted) :-
-    (   select([Element, N], Counted, Rest)
-    ->  N1 is N + 1,
-        NewCounted = [[Element, N1] | Rest]
-    ;   NewCounted = [[Element, 1] | Counted]
+    (   select([Element, N], Counted, Rest) % If the element is already in the list
+    ->  N1 is N + 1, % Increment the count by 1
+        NewCounted = [[Element, N1] | Rest] % Update the list with the incremented count
+    ;   NewCounted = [[Element, 1] | Counted] % Add the element with a count of 1 to the list
     ).
 
 count_extra_elements(Counted, ExtraCount) :-
-    include(exceeds_threshold, Counted, Exceeding),
-    length(Exceeding, ExtraCount).
+    % Filter the elements that exceed a certain threshold
+    include(exceeds_threshold, Counted, Exceeding), 
+    % Count the filtered elements
+    length(Exceeding, ExtraCount). 
 
 exceeds_threshold([_, N]) :-
-    N > 2.
+    N > 2. % Predicate to check if the count exceeds the threshold (2 in this case)
+
+
+minimal_schedule_errors(A, B, C, E) :-
+    E = 0,
+    (
+        % Create schedules with the minimum dissatisfied students
+        schedule(A, B, C),
+        schedule_errors(A, B, C, E)
+    ;
+        % If there is not a program with 0 dissatisfied students,
+        % then increase the number by 1 until it finds a program
+        % with the next less dissatisfied students
+        \+ (schedule(A, B, C), schedule_errors(A, B, C, E)),
+        ENew #= E + 1,
+        minimal_schedule_errors(A, B, C, ENew)
+    ).
+    
 
 
 score_schedule(A,B,C,S) :-
@@ -103,7 +115,7 @@ score_schedule(A,B,C,S) :-
 %Score calculation from the students that give a lesson on Mon-Fri
     score_week2(A, Score2_W1),
     score_week2(B, Score2_W2),
-    Score3 is Score_W1 + Score_W2,
+    Score3 is Score2_W1 + Score2_W2,
 
 %Score removal calculation from the students that give 3 lessons per week
     score_removal(A,Score_removal1),
@@ -168,19 +180,14 @@ count_single_occurences(Students, Count) :-
     length(SingleOccurrences, Count).
 
 
-maximum_score_schedule(A,B,C,E,S) :-
-    (
-        %create score predicates with the scores for each minimal schedule(A,B,C)
-        minimal_schedule_errors(X,Y,Z,R),
-        score_schedule(X,Y,Z,Score),
-        assert(score(Score))
-    ;
-        %Then insert all the scores to a list(Scores), find the maximum score
-        %and re-run the score_schedule with the maximum score
-        findall(S, score(S), Scores),
-        max_list(Scores, Max),
-        S #= Max,
-        minimal_schedule_errors(A,B,C,E),
-        score_schedule(A,B,C,S)
-    ).
-
+% Find the maximum score among all possible schedules
+maximum_score_schedule(A, B, C, E, S) :-
+    % Find all scores of possible schedules
+    findall(Score, (
+        minimal_schedule_errors(X, Y, Z, _), % Generate possible schedules
+        score_schedule(X, Y, Z, Score) % Calculate score for each schedule
+    ), Scores),
+    % Find the maximum score from the list of scores
+    max_list(Scores, S),
+    % Find the minimal schedule errors for the given courses
+    minimal_schedule_errors(A, B, C, E).
