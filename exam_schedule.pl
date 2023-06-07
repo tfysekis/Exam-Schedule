@@ -58,7 +58,7 @@ minimal_schedule_errors(A,B,C,E) :-
 %the number by 1 until it finds a program with the next less dissatisfied students      
         \+ (schedule(A,B,C),schedule_errors(A,B,C,E)),
         ENew #= E + 1,
-        min_error(A,B,C,ENew)
+        minimal_schedule_errors(A,B,C,ENew)
     ).
 % Helper predicate to retrieve students attending a lesson
 get_students(Lessons, Students) :-
