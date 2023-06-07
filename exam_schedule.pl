@@ -173,10 +173,13 @@ count_single_occurences(Students, Count) :-
 
 maximum_score_schedule(A,B,C,E,S) :-
     (
+        %create score predicates with the scores for each minimal schedule(A,B,C)
         minimal_schedule_errors(X,Y,Z,R),
         score_schedule(X,Y,Z,Score),
         assert(score(Score))
     ;
+        %Then insert all the scores to a list(Scores), find the maximum score
+        %and re-run the score_schedule with the maximum score
         findall(S, score(S), Scores),
         max_list(Scores, Max),
         S #= Max,
