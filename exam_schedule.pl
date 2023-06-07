@@ -48,7 +48,7 @@ schedule_errors(A, B, C, E) :-
     E is CountA + CountB + CountC.
 
 minimal_schedule_errors(A,B,C,E) :-
-    (var(ENew) -> E = -1 ; E = ENew),
+    (var(ENew) -> E = 0 ; E = ENew),
     ( 
 %Create schedules with the minimum dissatisfied students
         schedule(A,B,C),
