@@ -188,4 +188,6 @@ maximum_score_schedule(A, B, C, E, S) :-
     % Find the maximum score from the list of scores
     max_list(Scores, S),
     % Find the minimal schedule errors for the given courses
-    minimal_schedule_errors(A, B, C, E).
+    minimal_schedule_errors(A, B, C, E),
+    score_schedule(A,B,C,S).
+    
