@@ -81,21 +81,26 @@ count_extra_elements(Counted, ExtraCount) :-
 exceeds_threshold([_, N]) :-
     N > 2. % Predicate to check if the count exceeds the threshold (2 in this case)
 
-minimal_schedule_errors(A,B,C,E) :-
-    (var(ENew) -> E = 0 ; E = ENew),
+minimal_schedule_errors(A,B,C,_E) :-
+    min_error(A,B,C,0).
+
+
+min_error(A,B,C,E) :-
     ( 
-%Create schedules with the minimum dissatisfied students
+%Create schedules with the minimum dissatisfied students    
         schedule(A,B,C),
-        schedule_errors(A,B,C,E)
+        schedule_errors(A,B,C,E),
+        format('E = ~w', [E])
     ;
 %If there is not a program with 0 dissatsified students then increase the 
 %the number by 1 until it finds a program with the next less dissatisfied students      
         \+ (schedule(A,B,C),schedule_errors(A,B,C,E)),
-        ENew #= E + 1,
-        minimal_schedule_errors(A,B,C,ENew)
+        ENew is E + 1,
+        min_error(A,B,C,ENew)
     ).
-    
 
+increment(E, ENew) :-
+    ENew is E + 1.
 
 score_schedule(A,B,C,S) :-
 %Score calculation from the students that attend only one lesson per week
@@ -179,15 +184,18 @@ count_single_occurences(Students, Count) :-
 
 
 % Find the maximum score among all possible schedules
-maximum_score_schedule(A, B, C, E, S) :-
-    % Find all scores of possible schedules
-    findall(Score, (
-        minimal_schedule_errors(X, Y, Z, _), % Generate possible schedules
-        score_schedule(X, Y, Z, Score) % Calculate score for each schedule
-    ), Scores),
-    % Find the maximum score from the list of scores
-    max_list(Scores, S),
-    % Find the minimal schedule errors for the given courses
-    minimal_schedule_errors(A, B, C, E),
-    score_schedule(A,B,C,S).
-    
+maximum_score_schedule(A,B,C,E,S) :-
+    (
+        %create score predicates with the scores for each minimal schedule(A,B,C)
+        minimal_schedule_errors(X,Y,Z,_R),
+        score_schedule(X,Y,Z,Score),
+        assert(score(Score))
+    ;
+        %Then insert all the scores to a list(Scores), find the maximum score
+        %and re-run the score_schedule with the maximum score
+        findall(S, score(S), Scores),
+        max_list(Scores, Max),
+        S #= Max,
+        minimal_schedule_errors(A,B,C,E),
+        score_schedule(A,B,C,S)
+    ).
